@@ -25,10 +25,15 @@
 
             <!-- SEND INITIAL STATE -->
             <div class="state-panel active" id="state-send-init">
-                <div class="drop-zone" id="drop-zone">
+                <div class="drop-zone" id="drop-zone" style="height: 80px; margin-bottom: 0.5rem;">
                     CLICK OR DROP FILE
                 </div>
                 <input type="file" id="file-input" hidden>
+
+                <div class="text-sm" id="or-divider" style="margin: 0.5rem 0; color: #444;">OR</div>
+
+                <textarea id="text-input" placeholder="PASTE TEXT HERE..."
+                    style="width:100%; height:80px; background:var(--bg); color:var(--fg); border:1px solid var(--border); padding:0.75rem; resize:none; font-family:inherit; font-size:0.8rem; outline:none; text-align:center;"></textarea>
 
                 <div id="connect-info" style="margin-top: 1.5rem; width: 100%; text-align: center;">
                     <div class="text-sm">SCAN TO CONNECT PHONE</div>
@@ -87,10 +92,14 @@
             <!-- RECEIVE COMPLETE STATE -->
             <div class="state-panel" id="state-receive-done">
                 <div class="text-sm" style="margin-bottom: 1rem; color: var(--fg);">TRANSFER COMPLETE</div>
-                <div class="text-sm" id="received-filename" style="margin-bottom: 2rem;"></div>
+                <div class="text-sm" id="received-filename" style="margin-bottom: 1rem;"></div>
+                
+                <div id="received-text-display" class="hidden" style="width:100%; height:80px; background:var(--bg); color:#aaa; border:1px solid var(--border); padding:0.75rem; overflow-y:auto; font-size:0.8rem; margin-bottom:1rem; word-break: break-all; text-align:left;"></div>
+                
                 <a class="btn" id="download-btn">SAVE FILE</a>
-                <button class="btn" id="reset-receive-btn" style="margin-top:0.5rem; border-color: #333;">SCAN
-                    ANOTHER</button>
+                <button class="btn hidden" id="copy-text-btn" style="border-color: var(--fg);">COPY TEXT</button>
+                
+                <button class="btn" id="reset-receive-btn" style="margin-top:0.5rem; border-color: #333;">SCAN ANOTHER</button>
             </div>
 
         </div>

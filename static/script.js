@@ -94,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const flashText = document.getElementById('flash-text');
     const stopFlashBtn = document.getElementById('stop-flash-btn');
     const estTime = document.getElementById('est-time');
+    const textInput = document.getElementById('text-input');
+    const orDivider = document.getElementById('or-divider');
 
     const CHUNK_SIZE = 100; // Optimized size for fast L-level scanning on any device
     let fountainBlocks = [];
@@ -105,6 +107,15 @@ document.addEventListener('DOMContentLoaded', () => {
     dropZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', e => {
         if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    textInput.addEventListener('input', e => {
+        const text = e.target.value.trim();
+        if (text.length > 0) {
+            handleText(text);
+        } else {
+            resetSender();
+        }
     });
 
     function updateEstTime() {
@@ -128,8 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetSender() {
         fileInput.value = "";
+        textInput.value = "";
         fountainBlocks = [];
         dropZone.classList.remove('hidden');
+        textInput.classList.remove('hidden');
+        orDivider.classList.remove('hidden');
         document.getElementById('connect-info').classList.remove('hidden');
         fileInfo.classList.add('hidden');
         sendSettings.classList.add('hidden');
@@ -138,15 +152,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     removeFileBtn.addEventListener('click', resetSender);
 
-    function handleFile(file) {
-        fileName.textContent = file.name;
-        fileSize.textContent = formatBytes(file.size);
+    function hideInputs() {
         dropZone.classList.add('hidden');
+        textInput.classList.add('hidden');
+        orDivider.classList.add('hidden');
         document.getElementById('connect-info').classList.add('hidden');
         fileInfo.classList.remove('hidden');
         sendSettings.classList.remove('hidden');
         startFlashBtn.classList.remove('hidden');
         removeFileBtn.classList.remove('hidden');
+    }
+
+    function handleText(text) {
+        fileName.textContent = "Clipboard Text";
+        fileSize.textContent = formatBytes(text.length);
+        hideInputs();
+
+        startFlashBtn.disabled = false;
+        startFlashBtn.textContent = "START TRANSFER";
+
+        const encoder = new TextEncoder();
+        const buffer = encoder.encode(text).buffer;
+        prepareChunks("clipboard.txt", "text/plain", buffer);
+    }
+
+    function handleFile(file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatBytes(file.size);
+        hideInputs();
 
         startFlashBtn.disabled = true;
         startFlashBtn.textContent = "PROCESSING...";
@@ -335,8 +368,15 @@ document.addEventListener('DOMContentLoaded', () => {
             (decodedText) => handleScannedCode(decodedText),
             () => { } // ignore errors
         ).catch(err => {
-            alert("CAMERA ERROR: " + err);
-            switchState('state-receive-init');
+            // Fallback for laptops that only have a front-facing camera
+            html5QrcodeScanner.start(
+                { facingMode: "user" }, config,
+                (decodedText) => handleScannedCode(decodedText),
+                () => { }
+            ).catch(err2 => {
+                alert("CAMERA ERROR: Could not start any camera.");
+                switchState('state-receive-init');
+            });
         });
     }
 
@@ -442,12 +482,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fileBytes = fullData.slice(2 + metaLen, 2 + metaLen + meta.l);
 
-        const blob = new Blob([fileBytes], { type: meta.m });
-        const url = URL.createObjectURL(blob);
-
         receivedFilename.textContent = meta.n;
-        downloadBtn.href = url;
-        downloadBtn.download = meta.n;
+
+        if (meta.n === "clipboard.txt") {
+            const textContent = new TextDecoder().decode(fileBytes);
+            document.getElementById('download-btn').classList.add('hidden');
+            document.getElementById('copy-text-btn').classList.remove('hidden');
+            const textDisplay = document.getElementById('received-text-display');
+            textDisplay.classList.remove('hidden');
+            textDisplay.textContent = textContent;
+
+            document.getElementById('copy-text-btn').onclick = () => {
+                navigator.clipboard.writeText(textContent);
+                document.getElementById('copy-text-btn').textContent = "COPIED!";
+                setTimeout(() => document.getElementById('copy-text-btn').textContent = "COPY TEXT", 2000);
+            };
+        } else {
+            document.getElementById('download-btn').classList.remove('hidden');
+            document.getElementById('copy-text-btn').classList.add('hidden');
+            document.getElementById('received-text-display').classList.add('hidden');
+            
+            const blob = new Blob([fileBytes], { type: meta.m });
+            const url = URL.createObjectURL(blob);
+            downloadBtn.href = url;
+            downloadBtn.download = meta.n;
+        }
 
         switchState('state-receive-done');
     }
