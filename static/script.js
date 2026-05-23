@@ -149,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sendSettings.classList.add('hidden');
         startFlashBtn.classList.add('hidden');
         removeFileBtn.classList.add('hidden');
-        document.getElementById('compress-container').classList.add('hidden');
     }
     removeFileBtn.addEventListener('click', resetSender);
 
@@ -162,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sendSettings.classList.remove('hidden');
         startFlashBtn.classList.remove('hidden');
         removeFileBtn.classList.remove('hidden');
-        document.getElementById('compress-container').classList.remove('hidden');
     }
 
     function handleText(text) {
@@ -198,28 +196,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function prepareChunks(filename, mime, buffer) {
         fileIdStr = Math.random().toString(36).substring(2, 6).toUpperCase();
 
-        const compressToggle = document.getElementById('compress-toggle');
-        let dataBuffer = new Uint8Array(buffer);
-        let isCompressed = 0;
-
-        if (compressToggle && compressToggle.checked) {
-            try {
-                dataBuffer = fflate.zlibSync(dataBuffer, { level: 9 });
-                isCompressed = 1;
-            } catch (e) {
-                console.error("Compression failed", e);
-            }
-        }
-
-        const metaStr = JSON.stringify({ n: filename, m: mime, l: buffer.byteLength, c: isCompressed, cl: dataBuffer.byteLength });
+        const metaStr = JSON.stringify({ n: filename, m: mime, l: buffer.byteLength });
         const metaBytes = new TextEncoder().encode(metaStr);
-        const totalLen = 2 + metaBytes.length + dataBuffer.byteLength;
+        const totalLen = 2 + metaBytes.length + buffer.byteLength;
 
         let fullData = new Uint8Array(totalLen);
         fullData[0] = (metaBytes.length >> 8) & 0xFF;
         fullData[1] = metaBytes.length & 0xFF;
         fullData.set(metaBytes, 2);
-        fullData.set(dataBuffer, 2 + metaBytes.length);
+        fullData.set(new Uint8Array(buffer), 2 + metaBytes.length);
 
         fountainBlocks = [];
         const N = Math.ceil(fullData.length / CHUNK_SIZE);
@@ -495,17 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const metaStr = new TextDecoder().decode(metaBytes);
         const meta = JSON.parse(metaStr);
 
-        let fileBytes = fullData.slice(2 + metaLen, 2 + metaLen + (meta.c ? meta.cl : meta.l));
-
-        if (meta.c) {
-            try {
-                fileBytes = fflate.unzlibSync(fileBytes);
-            } catch (e) {
-                console.error("Decompression error", e);
-                alert("Decompression failed! File might be corrupted.");
-                return;
-            }
-        }
+        const fileBytes = fullData.slice(2 + metaLen, 2 + metaLen + meta.l);
 
         receivedFilename.textContent = meta.n;
 

@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://unpkg.com/fflate"></script>
 </head>
 
 <body>
@@ -51,23 +50,18 @@
                 </div>
 
                 <div class="settings hidden" id="send-settings">
-                    <div style="text-align:center; margin-bottom: 0.5rem;">
-                        <div class="text-sm">SPEED: <span id="fps-display">15</span> FPS</div>
+                    <div style="text-align:center; margin-bottom: 1rem;">
+                        <div class="text-sm" style="color:var(--fg);">SPEED: <span id="fps-display">15</span> FPS</div>
                     </div>
                     <input type="range" id="fps-slider" min="1" max="30" value="15">
-                    <div class="text-sm" id="est-time" style="margin-top:0.5rem; color:#666;"></div>
+                    <div class="text-sm" id="est-time"
+                        style="text-align:center; margin-top:0.5rem; margin-bottom:2rem; color:#666;"></div>
                 </div>
 
-                <button class="btn hidden" id="start-flash-btn">START TRANSFER</button>
+
+
+                <button class="btn hidden" id="start-flash-btn" style="margin-bottom:0.5rem;">START TRANSFER</button>
                 <button class="btn hidden" id="remove-file-btn" style="border-color: #333;">CANCEL</button>
-
-                <div id="compress-container" class="hidden" style="display:flex; justify-content:flex-end; align-items:center; margin-top: 1.5rem; width: 100%;">
-                    <label for="compress-toggle" class="text-sm" style="margin-right:0.5rem; cursor:pointer;">COMPRESS</label>
-                    <label class="switch">
-                        <input type="checkbox" id="compress-toggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
             </div>
 
             <!-- SEND FLASHING STATE -->
