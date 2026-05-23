@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DropQR</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>DROPQR</h1>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="send">SEND</button>
+            <button class="tab-btn" data-tab="receive">RECEIVE</button>
+        </div>
+
+        <div class="display-area">
+
+            <!-- SEND INITIAL STATE -->
+            <div class="state-panel active" id="state-send-init">
+                <div class="drop-zone" id="drop-zone" style="height: 80px; margin-bottom: 0.5rem;">
+                    CLICK OR DROP FILE
+                </div>
+                <input type="file" id="file-input" hidden>
+
+                <div class="text-sm" id="or-divider" style="margin: 0.5rem 0; color: #444;">OR</div>
+
+                <textarea id="text-input" placeholder="PASTE TEXT HERE..."
+                    style="width:100%; height:80px; background:var(--bg); color:var(--fg); border:1px solid var(--border); padding:0.75rem; resize:none; font-family:inherit; font-size:0.8rem; outline:none; text-align:center;"></textarea>
+
+                <div id="connect-info" style="margin-top: 1.5rem; width: 100%; text-align: center;">
+                    <div class="text-sm">SCAN TO CONNECT PHONE</div>
+                    <div id="connect-qrcode"
+                        style="display:flex; justify-content:center; align-items:center; background:white; padding:10px; width:220px; height:220px; margin: 0 auto; border: 1px solid #333;">
+                    </div>
+                    <div id="connect-url" class="text-sm"
+                        style="margin-top:0.5rem; color:var(--fg); word-break: break-all;"></div>
+                </div>
+
+                <div id="file-info" class="hidden" style="width: 100%; text-align: center; margin-bottom: 1rem;">
+                    <div class="text-sm" id="file-name" style="color: var(--fg); font-weight: bold;"></div>
+                    <div class="text-sm" id="file-size"></div>
+                </div>
+
+                <div class="settings hidden" id="send-settings">
+                    <div style="text-align:center; margin-bottom: 1rem;">
+                        <div class="text-sm" style="color:var(--fg);">SPEED: <span id="fps-display">15</span> FPS</div>
+                    </div>
+                    <input type="range" id="fps-slider" min="1" max="30" value="15">
+                    <div class="text-sm" id="est-time"
+                        style="text-align:center; margin-top:0.5rem; margin-bottom:2rem; color:#666;"></div>
+                </div>
+
+
+
+                <button class="btn hidden" id="start-flash-btn" style="margin-bottom:0.5rem;">START TRANSFER</button>
+                <button class="btn hidden" id="remove-file-btn" style="border-color: #333;">CANCEL</button>
+            </div>
+
+            <!-- SEND FLASHING STATE -->
+            <div class="state-panel" id="state-send-flash">
+                <div class="qr-box">
+                    <div id="qrcode"></div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-fill" id="flash-progress"></div>
+                </div>
+                <div class="text-sm" id="flash-text">FRAME 1/1</div>
+                <button class="btn" id="stop-flash-btn">STOP</button>
+            </div>
+
+            <!-- RECEIVE INITIAL STATE -->
+            <div class="state-panel" id="state-receive-init">
+                <div class="text-sm" style="margin-bottom: 2rem;">POINT CAMERA AT FLASHING QR</div>
+                <button class="btn" id="start-scan-btn">START SCANNER</button>
+            </div>
+
+            <!-- RECEIVE SCANNING STATE -->
+            <div class="state-panel" id="state-receive-scan">
+                <div class="scanner-box">
+                    <div id="reader"></div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-fill" id="receive-progress"></div>
+                </div>
+                <div class="text-sm" id="receive-text">0/0 CHUNKS</div>
+                <button class="btn" id="stop-scan-btn">STOP</button>
+            </div>
+
+            <!-- RECEIVE COMPLETE STATE -->
+            <div class="state-panel" id="state-receive-done">
+                <div class="text-sm" style="margin-bottom: 1rem; color: var(--fg);">TRANSFER COMPLETE</div>
+                <div class="text-sm" id="received-filename" style="margin-bottom: 1rem;"></div>
+
+                <div id="received-text-display" class="hidden"
+                    style="width:100%; height:80px; background:var(--bg); color:#aaa; border:1px solid var(--border); padding:0.75rem; overflow-y:auto; font-size:0.8rem; margin-bottom:1rem; word-break: break-all; text-align:left;">
+                </div>
+
+                <a class="btn" id="download-btn">SAVE FILE</a>
+                <button class="btn hidden" id="copy-text-btn" style="border-color: var(--fg);">COPY TEXT</button>
+
+                <button class="btn" id="reset-receive-btn" style="margin-top:0.5rem; border-color: #333;">SCAN
+                    ANOTHER</button>
+            </div>
+
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
