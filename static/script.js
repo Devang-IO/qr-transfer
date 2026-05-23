@@ -240,6 +240,51 @@ document.addEventListener('DOMContentLoaded', () => {
         stopFlashingInterval();
     }
 
+    // --- HAPTIC & AUDIO FEEDBACK ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function triggerTick() {
+        if (navigator.vibrate) navigator.vibrate(10);
+        if (audioCtx) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+    }
+
+    function triggerSuccess() {
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+        if (audioCtx) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+    }
+
     // --- RECEIVER LOGIC ---
     const startScanBtn = document.getElementById('start-scan-btn');
     const stopScanBtn = document.getElementById('stop-scan-btn');
@@ -258,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalReceiverBlocks = 0;
 
     startScanBtn.addEventListener('click', () => {
+        initAudio(); // Initialize audio context on user interaction
         solvedBlocks = [];
         droplets = [];
         solvedCount = 0;
@@ -324,6 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const indices = getIndices(seed, degree, N);
         let droplet = { indices: new Set(indices), payload: payload };
 
+        let isUseful = false;
+
         // XOR out any already solved blocks
         for (let idx of Array.from(droplet.indices)) {
             if (solvedBlocks[idx]) {
@@ -334,6 +382,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (droplet.indices.size > 0) {
             droplets.push(droplet);
+            isUseful = true;
+        }
+
+        if (isUseful) {
+            triggerTick();
         }
 
         processDroplets();
@@ -375,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function finalizeTransfer() {
         stopScanning();
+        triggerSuccess();
 
         let fullData = new Uint8Array(totalReceiverBlocks * CHUNK_SIZE);
         for (let i = 0; i < totalReceiverBlocks; i++) {
