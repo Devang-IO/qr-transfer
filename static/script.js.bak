@@ -34,51 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }).catch(() => { });
 
-    // --- FOUNTAIN CODE UTILS ---
-    class PRNG {
-        constructor(seed) { this.state = seed >>> 0; }
-        next() {
-            this.state = (this.state * 1664525 + 1013904223) >>> 0;
-            return this.state;
-        }
-    }
-
-    function getIndices(seed, degree, numBlocks) {
-        let prng = new PRNG(seed);
-        let indices = new Set();
-        while (indices.size < degree) {
-            indices.add(prng.next() % numBlocks);
-        }
-        return Array.from(indices);
-    }
-
-    function sampleDegree(numBlocks) {
-        let r = Math.random();
-        if (r < 0.5) return 1;
-        if (r < 0.8) return 2;
-        if (r < 0.95) return 3;
-        return Math.floor(Math.random() * numBlocks) + 1;
-    }
-
-    function uint8ToBase64(u8) {
-        let bin = '';
-        for (let i = 0; i < u8.length; i++) bin += String.fromCharCode(u8[i]);
-        return btoa(bin);
-    }
-
-    function base64ToUint8(b64) {
-        let bin = atob(b64);
-        let u8 = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-        return u8;
-    }
-
-    function xorArrays(a, b) {
-        let res = new Uint8Array(a.length);
-        for (let i = 0; i < a.length; i++) res[i] = a[i] ^ b[i];
-        return res;
-    }
-
     // --- SENDER LOGIC ---
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -96,11 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const estTime = document.getElementById('est-time');
 
     const CHUNK_SIZE = 100; // Optimized size for fast L-level scanning on any device
-    let fountainBlocks = [];
+    let qrChunks = [];
     let flashInterval = null;
     let currentFrame = 0;
     let qrcode = null;
-    let fileIdStr = "";
 
     dropZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', e => {
@@ -108,10 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateEstTime() {
-        if (fountainBlocks.length > 0) {
+        if (qrChunks.length > 0) {
             const fps = parseInt(fpsSlider.value);
-            const estSeconds = Math.ceil((fountainBlocks.length) / fps);
-            estTime.textContent = `EST: ~${estSeconds}s FOR ${fountainBlocks.length} BLOCKS`;
+            const estSeconds = Math.ceil(qrChunks.length / fps);
+            estTime.textContent = `LOOP: ${estSeconds}s FOR ${qrChunks.length} FRAMES`;
         } else {
             estTime.textContent = "";
         }
@@ -126,9 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    removeFileBtn.addEventListener('click', resetSender);
+
     function resetSender() {
         fileInput.value = "";
-        fountainBlocks = [];
+        qrChunks = [];
         dropZone.classList.remove('hidden');
         document.getElementById('connect-info').classList.remove('hidden');
         fileInfo.classList.add('hidden');
@@ -136,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startFlashBtn.classList.add('hidden');
         removeFileBtn.classList.add('hidden');
     }
-    removeFileBtn.addEventListener('click', resetSender);
 
     function handleFile(file) {
         fileName.textContent = file.name;
@@ -153,40 +108,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const reader = new FileReader();
         reader.onload = e => {
-            prepareChunks(file.name, file.type, e.target.result);
+            const base64Data = e.target.result.split(',')[1];
+            prepareChunks(file.name, file.type, base64Data);
             startFlashBtn.disabled = false;
             startFlashBtn.textContent = "START TRANSFER";
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsDataURL(file);
     }
 
-    function prepareChunks(filename, mime, buffer) {
-        fileIdStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+    function prepareChunks(filename, mime, base64) {
+        const fileId = Math.random().toString(36).substring(2, 6).toUpperCase();
+        qrChunks = [];
+        const totalDataChunks = Math.ceil(base64.length / CHUNK_SIZE);
+        const totalChunks = totalDataChunks + 1;
 
-        const metaStr = JSON.stringify({ n: filename, m: mime, l: buffer.byteLength });
-        const metaBytes = new TextEncoder().encode(metaStr);
-        const totalLen = 2 + metaBytes.length + buffer.byteLength;
+        qrChunks.push(`DQR|${fileId}|0|${totalChunks}|META|${filename}|${mime}`);
 
-        let fullData = new Uint8Array(totalLen);
-        fullData[0] = (metaBytes.length >> 8) & 0xFF;
-        fullData[1] = metaBytes.length & 0xFF;
-        fullData.set(metaBytes, 2);
-        fullData.set(new Uint8Array(buffer), 2 + metaBytes.length);
-
-        fountainBlocks = [];
-        const N = Math.ceil(fullData.length / CHUNK_SIZE);
-        for (let i = 0; i < N; i++) {
-            let chunk = new Uint8Array(CHUNK_SIZE);
-            let slice = fullData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            chunk.set(slice);
-            fountainBlocks.push(chunk);
+        for (let i = 0; i < totalDataChunks; i++) {
+            const chunkData = base64.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+            qrChunks.push(`DQR|${fileId}|${i + 1}|${totalChunks}|DATA|${chunkData}`);
         }
 
         updateEstTime();
     }
 
     startFlashBtn.addEventListener('click', () => {
-        if (!fountainBlocks.length) return;
+        if (!qrChunks.length) return;
         switchState('state-send-flash');
         currentFrame = 0;
         startFlashingInterval();
@@ -209,26 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const intervalMs = 1000 / fps;
 
         flashInterval = setInterval(() => {
-            const seed = Math.floor(Math.random() * 0xFFFFFFFF);
-            let degree = sampleDegree(fountainBlocks.length);
-            if (degree > fountainBlocks.length) degree = fountainBlocks.length;
-
-            const indices = getIndices(seed, degree, fountainBlocks.length);
-
-            let payload = new Uint8Array(CHUNK_SIZE);
-            for (let idx of indices) {
-                payload = xorArrays(payload, fountainBlocks[idx]);
-            }
-
-            const b64 = uint8ToBase64(payload);
-            const qrStr = `LT|${fileIdStr}|${fountainBlocks.length}|${seed}|${degree}|${b64}`;
-
             qrcode.clear();
-            qrcode.makeCode(qrStr);
+            qrcode.makeCode(qrChunks[currentFrame]);
 
-            currentFrame++;
-            flashProgress.style.width = `${(currentFrame % fountainBlocks.length) / fountainBlocks.length * 100}%`;
-            flashText.textContent = `FLASHED: ${currentFrame} (ENDLESS FOUNTAIN)`;
+            flashProgress.style.width = `${((currentFrame + 1) / qrChunks.length) * 100}%`;
+            flashText.textContent = `FRAME ${currentFrame + 1}/${qrChunks.length}`;
+
+            currentFrame = (currentFrame + 1) % qrChunks.length;
         }, intervalMs);
     }
 
@@ -250,22 +184,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetReceiveBtn = document.getElementById('reset-receive-btn');
 
     let html5QrcodeScanner = null;
+    let receivedChunks = new Map();
     let receiverFileId = null;
-
-    let solvedBlocks = [];
-    let droplets = [];
-    let solvedCount = 0;
-    let totalReceiverBlocks = 0;
+    let receiverTotalChunks = 0;
+    let receiverMeta = null;
 
     startScanBtn.addEventListener('click', () => {
-        solvedBlocks = [];
-        droplets = [];
-        solvedCount = 0;
-        totalReceiverBlocks = 0;
+        receivedChunks.clear();
         receiverFileId = null;
-
+        receiverTotalChunks = 0;
+        receiverMeta = null;
         receiveProgress.style.width = '0%';
-        receiveText.textContent = '0/0 BLOCKS';
+        receiveText.textContent = '0/0 CHUNKS';
 
         switchState('state-receive-scan');
         startScanning();
@@ -304,96 +234,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleScannedCode(text) {
-        if (!text.startsWith('LT|')) return;
+        if (!text.startsWith('DQR|')) return;
 
         const parts = text.split('|');
-        if (parts.length < 6) return;
+        if (parts.length < 5) return;
 
         const fileId = parts[1];
-        const N = parseInt(parts[2]);
-        const seed = parseInt(parts[3]);
-        const degree = parseInt(parts[4]);
-        const payload = base64ToUint8(parts[5]);
+        const index = parseInt(parts[2]);
+        const total = parseInt(parts[3]);
+        const type = parts[4];
 
         if (!receiverFileId) {
             receiverFileId = fileId;
-            totalReceiverBlocks = N;
-            solvedBlocks = new Array(N).fill(null);
+            receiverTotalChunks = total;
         } else if (receiverFileId !== fileId) return;
 
-        const indices = getIndices(seed, degree, N);
-        let droplet = { indices: new Set(indices), payload: payload };
-
-        // XOR out any already solved blocks
-        for (let idx of Array.from(droplet.indices)) {
-            if (solvedBlocks[idx]) {
-                droplet.payload = xorArrays(droplet.payload, solvedBlocks[idx]);
-                droplet.indices.delete(idx);
+        if (!receivedChunks.has(index)) {
+            if (type === 'META') {
+                receiverMeta = { filename: parts[5], mime: parts[6] };
+            } else {
+                receivedChunks.set(index, parts.slice(5).join('|'));
             }
-        }
 
-        if (droplet.indices.size > 0) {
-            droplets.push(droplet);
-        }
+            const count = receivedChunks.size + (receiverMeta ? 1 : 0);
+            receiveProgress.style.width = `${(count / total) * 100}%`;
+            receiveText.textContent = `${count}/${total} CHUNKS`;
 
-        processDroplets();
-
-        receiveProgress.style.width = `${(solvedCount / totalReceiverBlocks) * 100}%`;
-        receiveText.textContent = `${solvedCount}/${totalReceiverBlocks} BLOCKS`;
-
-        if (solvedCount === totalReceiverBlocks && totalReceiverBlocks > 0) {
-            finalizeTransfer();
-        }
-    }
-
-    function processDroplets() {
-        let changed = true;
-        while (changed) {
-            changed = false;
-            for (let i = droplets.length - 1; i >= 0; i--) {
-                let d = droplets[i];
-                if (d.indices.size === 1) {
-                    let idx = Array.from(d.indices)[0];
-                    if (!solvedBlocks[idx]) {
-                        solvedBlocks[idx] = d.payload;
-                        solvedCount++;
-
-                        // XOR this solved block from all other droplets
-                        for (let j = 0; j < droplets.length; j++) {
-                            if (i !== j && droplets[j].indices.has(idx)) {
-                                droplets[j].payload = xorArrays(droplets[j].payload, d.payload);
-                                droplets[j].indices.delete(idx);
-                            }
-                        }
-                        changed = true;
-                    }
-                    droplets.splice(i, 1);
-                }
-            }
+            if (count === total && receiverMeta) finalizeTransfer();
         }
     }
 
     function finalizeTransfer() {
         stopScanning();
+        let fullBase64 = "";
+        for (let i = 1; i < receiverTotalChunks; i++) fullBase64 += receivedChunks.get(i);
 
-        let fullData = new Uint8Array(totalReceiverBlocks * CHUNK_SIZE);
-        for (let i = 0; i < totalReceiverBlocks; i++) {
-            fullData.set(solvedBlocks[i], i * CHUNK_SIZE);
-        }
-
-        const metaLen = (fullData[0] << 8) | fullData[1];
-        const metaBytes = fullData.slice(2, 2 + metaLen);
-        const metaStr = new TextDecoder().decode(metaBytes);
-        const meta = JSON.parse(metaStr);
-
-        const fileBytes = fullData.slice(2 + metaLen, 2 + metaLen + meta.l);
-
-        const blob = new Blob([fileBytes], { type: meta.m });
-        const url = URL.createObjectURL(blob);
-
-        receivedFilename.textContent = meta.n;
-        downloadBtn.href = url;
-        downloadBtn.download = meta.n;
+        receivedFilename.textContent = receiverMeta.filename;
+        downloadBtn.href = `data:${receiverMeta.mime};base64,${fullBase64}`;
+        downloadBtn.download = receiverMeta.filename;
 
         switchState('state-receive-done');
     }
