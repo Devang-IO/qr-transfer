@@ -501,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('download-btn').classList.remove('hidden');
             document.getElementById('copy-text-btn').classList.add('hidden');
             document.getElementById('received-text-display').classList.add('hidden');
-            
+
             const blob = new Blob([fileBytes], { type: meta.m });
             const url = URL.createObjectURL(blob);
             downloadBtn.href = url;
