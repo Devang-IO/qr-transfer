@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('connect-url').textContent = data.url;
             new QRCode(document.getElementById('connect-qrcode'), {
                 text: data.url,
-                width: 120, height: 120,
+                width: 180, height: 180,
                 colorDark: "#000000", colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.L
             });
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startFlashingInterval() {
         if (!qrcode) {
             qrcode = new QRCode(document.getElementById('qrcode'), {
-                width: 250, height: 250,
+                width: 320, height: 320,
                 colorDark: "#000000", colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.L
             });
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startScanning() {
         html5QrcodeScanner = new Html5Qrcode("reader");
-        const config = { fps: 30, qrbox: { width: 250, height: 250 } };
+        const config = { fps: 30 };
 
         html5QrcodeScanner.start(
             { facingMode: "environment" }, config,

@@ -23,8 +23,8 @@ body {
 
 /* Central container, absolutely fixed to prevent any layout shifts */
 .container {
-    width: 320px;
-    height: 500px;
+    width: 380px;
+    height: 650px;
     position: relative;
     border: 1px solid var(--border);
     display: flex;
@@ -173,8 +173,8 @@ h1 {
 /* QR & Scanner Containers exactly identical in size */
 .qr-box,
 .scanner-box {
-    width: 250px;
-    height: 250px;
+    width: 320px;
+    height: 320px;
     border: 1px solid var(--border);
     display: flex;
     justify-content: center;
@@ -189,8 +189,8 @@ h1 {
 }
 
 #reader {
-    width: 250px !important;
-    height: 250px !important;
+    width: 320px !important;
+    height: 320px !important;
     border: none !important;
 }
 
