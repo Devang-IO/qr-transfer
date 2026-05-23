@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sendSettings.classList.add('hidden');
         startFlashBtn.classList.add('hidden');
         removeFileBtn.classList.add('hidden');
+        document.getElementById('compress-container').classList.add('hidden');
     }
     removeFileBtn.addEventListener('click', resetSender);
 
@@ -161,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sendSettings.classList.remove('hidden');
         startFlashBtn.classList.remove('hidden');
         removeFileBtn.classList.remove('hidden');
+        document.getElementById('compress-container').classList.remove('hidden');
     }
 
     function handleText(text) {
