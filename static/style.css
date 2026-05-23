@@ -1,0 +1,225 @@
+:root {
+    --bg: #000000;
+    --fg: #ffffff;
+    --border: #333333;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--fg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* Central container, absolutely fixed to prevent any layout shifts */
+.container {
+    width: 320px;
+    height: 500px;
+    position: relative;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    text-align: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+h1 {
+    font-size: 1.2rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    color: #666;
+    border: none;
+    padding: 0.75rem 0;
+    cursor: pointer;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.tab-btn.active {
+    color: var(--fg);
+}
+
+/* Fixed display area */
+.display-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+/* All states are absolute to prevent moving */
+.state-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    padding: 1.5rem;
+}
+
+.state-panel.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Elements */
+.drop-zone {
+    width: 100%;
+    height: 150px;
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 1rem;
+}
+
+.drop-zone:hover {
+    border-color: var(--fg);
+    color: var(--fg);
+}
+
+.btn {
+    width: 100%;
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--border);
+    padding: 0.75rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+}
+
+.btn:hover {
+    border-color: var(--fg);
+}
+
+.btn:disabled {
+    color: #444;
+    border-color: #222;
+    cursor: not-allowed;
+}
+
+/* Small text & settings */
+.text-sm {
+    font-size: 0.75rem;
+    color: #888;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    width: 100%;
+}
+
+#file-name,
+#received-filename {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+    margin: 0 auto 0.5rem auto;
+}
+
+.settings {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.settings input[type="range"] {
+    width: 100%;
+    margin-top: 0.5rem;
+    accent-color: var(--fg);
+}
+
+/* QR & Scanner Containers exactly identical in size */
+.qr-box,
+.scanner-box {
+    width: 250px;
+    height: 250px;
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    /* QR needs white bg for contrast */
+}
+
+.scanner-box {
+    background: var(--bg);
+    overflow: hidden;
+}
+
+#reader {
+    width: 250px !important;
+    height: 250px !important;
+    border: none !important;
+}
+
+#reader video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+}
+
+/* Progress bar */
+.progress-container {
+    width: 100%;
+    height: 2px;
+    background: #222;
+    margin: 1rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--fg);
+    width: 0%;
+}
+
+.hidden {
+    display: none !important;
+}
+
+a.btn {
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}

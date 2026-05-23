@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receive - DropQR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <main class="container receiver-container">
+        <div class="glass-panel receive-panel">
+            <div class="icon-wrapper">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            </div>
+
+            <h1>File Ready!</h1>
+            <p class="filename">{{FILENAME}}</p>
+
+            <div id="text-content-display" class="hidden">
+                <div class="text-box">
+                    {{TEXT_CONTENT}}
+                </div>
+                <button id="copy-text-btn" class="secondary-btn full-width">Copy Text</button>
+            </div>
+
+            <a href="/download/{{FILE_ID}}" class="primary-btn download-btn" id="download-link">Download File</a>
+        </div>
+    </main>
+
+    <script>
+        const isText = {{ IS_TEXT }};
+        if (isText) {
+            document.getElementById('text-content-display').classList.remove('hidden');
+            document.getElementById('download-link').style.display = 'none';
+            document.querySelector('.filename').textContent = "Text Snippet Received";
+
+            document.getElementById('copy-text-btn').addEventListener('click', () => {
+                const text = document.querySelector('.text-box').innerText;
+                navigator.clipboard.writeText(text);
+                document.getElementById('copy-text-btn').textContent = "Copied!";
+                setTimeout(() => {
+                    document.getElementById('copy-text-btn').textContent = "Copy Text";
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+
+</html>
