@@ -52,13 +52,15 @@
 
                 <div class="settings hidden" id="send-settings">
                     <div
-                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+                        style="dispwlay:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
                         <div class="text-sm">SPEED: <span id="fps-display">15</span> FPS</div>
                         <div style="display:flex; align-items:center;">
                             <label for="compress-toggle" class="text-sm"
                                 style="margin-right:0.5rem; cursor:pointer;">COMPRESS</label>
-                            <input type="checkbox" id="compress-toggle" checked
-                                style="cursor:pointer; width:16px; height:16px;">
+                            <label class="switch">
+                                <input type="checkbox" id="compress-toggle" checked>
+                                <span class="slider"></span>
+                            </label>
                         </div>
                     </div>
                     <input type="range" id="fps-slider" min="1" max="30" value="15">
