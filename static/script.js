@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startFlashingInterval() {
         if (!qrcode) {
             qrcode = new QRCode(document.getElementById('qrcode'), {
-                width: 320, height: 320,
+                width: 280, height: 280,
                 colorDark: "#000000", colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.L
             });
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startScanning() {
         html5QrcodeScanner = new Html5Qrcode("reader");
-        const config = { fps: 30 };
+        const config = { fps: 15 };
 
         html5QrcodeScanner.start(
             { facingMode: "environment" }, config,
