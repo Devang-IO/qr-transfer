@@ -21,6 +21,19 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(stateId).classList.add('active');
     }
 
+    // --- Generate Connect Phone QR ---
+    fetch('/api/ip')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('connect-url').textContent = data.url;
+            new QRCode(document.getElementById('connect-qrcode'), {
+                text: data.url,
+                width: 120, height: 120,
+                colorDark: "#000000", colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.L
+            });
+        }).catch(() => { });
+
     // --- SENDER LOGIC ---
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -35,8 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const flashProgress = document.getElementById('flash-progress');
     const flashText = document.getElementById('flash-text');
     const stopFlashBtn = document.getElementById('stop-flash-btn');
+    const estTime = document.getElementById('est-time');
 
-    const CHUNK_SIZE = 250; // Optimized size for fast L-level scanning
+    const CHUNK_SIZE = 100; // Optimized size for fast L-level scanning on any device
     let qrChunks = [];
     let flashInterval = null;
     let currentFrame = 0;
@@ -47,8 +61,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.files.length) handleFile(e.target.files[0]);
     });
 
+    function updateEstTime() {
+        if (qrChunks.length > 0) {
+            const fps = parseInt(fpsSlider.value);
+            const estSeconds = Math.ceil(qrChunks.length / fps);
+            estTime.textContent = `LOOP: ${estSeconds}s FOR ${qrChunks.length} FRAMES`;
+        } else {
+            estTime.textContent = "";
+        }
+    }
+
     fpsSlider.addEventListener('input', e => {
         fpsDisplay.textContent = e.target.value;
+        updateEstTime();
         if (flashInterval) {
             stopFlashingInterval();
             startFlashingInterval();
@@ -61,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInput.value = "";
         qrChunks = [];
         dropZone.classList.remove('hidden');
+        document.getElementById('connect-info').classList.remove('hidden');
         fileInfo.classList.add('hidden');
         sendSettings.classList.add('hidden');
         startFlashBtn.classList.add('hidden');
@@ -71,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fileName.textContent = file.name;
         fileSize.textContent = formatBytes(file.size);
         dropZone.classList.add('hidden');
+        document.getElementById('connect-info').classList.add('hidden');
         fileInfo.classList.remove('hidden');
         sendSettings.classList.remove('hidden');
         startFlashBtn.classList.remove('hidden');
@@ -101,6 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const chunkData = base64.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
             qrChunks.push(`DQR|${fileId}|${i + 1}|${totalChunks}|DATA|${chunkData}`);
         }
+
+        updateEstTime();
     }
 
     startFlashBtn.addEventListener('click', () => {
